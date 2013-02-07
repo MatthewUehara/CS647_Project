@@ -1,0 +1,34 @@
+ECE453/SE465/CS447/ECE653/CS647
+Project Skeleton Files
+
+Lab Instructor:
+Bernie Roehl 
+
+TA in Charge:
+Tian Jiang
+
+https://ece.uwaterloo.ca/~lintan/courses/testing/llvm.html
+
+Do NOT modify any files given in this archive. You may modify files according to your local configurations, but note that all changes will be overwritten before your project is being marked.
+
+It is recommended to develop on ecelinux or your own computer running a popular flavour of Linux. There were reports show that ``sort'', as an example, behaves differently in Mac than in Linux. Cygwin and MinGW were not tested.
+
+If clang is not in PATH, how to tell Makefile where it is installed?
+In Makefile.common, "PREFIX=" defines where the LLVM executables are located. Put the FULL path if the executables are not in PATH.
+
+How to run tests?
+First, modify PREFIX accordingly.
+To run all tests together, execute "verify.sh". Logs of all output can be found in /tmp with names "testing-<your usename>-pi-<time of log>.log".
+clean.sh runs "make clean" in all tests directories, which removes temporary files created by verify.sh.
+To generate the output for one test, run "make" in the test's directory. Your output should be identical to the "gold" file. Your output should be passed through "sort" before "diff"ing with the "gold" file, i.e. cat <your output> | sort | diff - gold_x_xx
+
+How to prepare a submission?
+Organize the "pi" directory in the way that we run make inside "pi" directory and "pipair" is generated in the same directory.  The exit code of make will not be checked.
+
+How the marking is done?
+We will untar your submission, copy the content of the pi directory, run make, copy over the skeleton files and the full test suite with six tests and then run verify.sh.
+Note that each test is given 2 minutes. My prototype runs test3 in 2 seconds and test6 (not given to you) in 25 seconds, and all other tests in tens or hundreds of milliseconds. 
+
+If you have more questions, email us or go to the tutorial on Feb 15. 
+
+
