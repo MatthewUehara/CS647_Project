@@ -33,7 +33,7 @@ public class ParseCallgraph {
 
 		try {
 			Process process = Runtime.getRuntime().exec(
-					"opt -print-callgraph ../proj-skeleton/test1/hello.bc");
+					"opt -print-callgraph ../proj-skeleton/test2/main.bc");
 
 			// Content of BitCode is printed to stdout. Not interesting.
 			BufferedReader stdInput = new BufferedReader(new InputStreamReader(
