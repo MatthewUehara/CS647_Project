@@ -110,10 +110,7 @@ public class ParseCallgraph {
 			// update
 			TreeMap<PairConfidence, TreeSet<String>> pairs = new TreeMap<PairConfidence, TreeSet<String>>();
 		    ArrayList<String> functions = new ArrayList<String>(); 
-		    Iterator<String> keyIter = functionMapIntra.keySet().iterator();
-		    while(keyIter.hasNext()) {
-		    	functions.add((String)keyIter.next());
-		    }
+		    functions.addAll(functionMapIntra.keySet());
 			for (int i = 0; i < functions.size(); i ++) {
 				String function1 = (String)functions.get(i);
 				ArrayList<String> callerList = (ArrayList<String>)functionMapIntra.get(functions.get(i));
