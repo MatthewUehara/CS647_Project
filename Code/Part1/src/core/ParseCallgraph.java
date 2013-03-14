@@ -105,17 +105,6 @@ public class ParseCallgraph {
 				System.out.println(currentLine);
 			}
 			
-			TreeSet<String> t1 = new TreeSet<String>();
-			TreeSet<String> t2 = new TreeSet<String>();
-			t1.addAll(functionMapIntra.get("ap_escape_html"));
-			t2.addAll(functionMapIntra.get("apr_pstrcat"));
-			
-			System.out.println(t1);
-			System.out.println(t2);
-			System.out.println(t1.size());
-			t1.retainAll(t2);
-			System.out.println(t1.size());
-			
 			// update
 			TreeMap<PairConfidence, TreeSet<String>> pairs = new TreeMap<PairConfidence, TreeSet<String>>();
 		    ArrayList<String> functions = new ArrayList<String>(); 
