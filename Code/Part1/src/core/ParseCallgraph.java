@@ -3,7 +3,14 @@ package core;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.NumberFormat;
+import java.math.RoundingMode;
+import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.Map;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,9 +34,17 @@ public class ParseCallgraph {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		
+		int T_SUPPORT = 3;
+		double T_CONFIDENCE = 0.65;
+		
 		String currentLine = null;
 		String currentNode = null;
 		TreeSet<Support> supports = new TreeSet<Support>();
+		
+		// update
+		HashMap<String, TreeSet<String>> functionMap = new HashMap<String, TreeSet<String>>(); 
+		HashMap<String, ArrayList<String>> functionMapIntra = new HashMap<String, ArrayList<String>>(); 
 
 		try {
 			Process process = Runtime.getRuntime().exec(
@@ -44,6 +59,11 @@ public class ParseCallgraph {
 					process.getErrorStream()));
 
 			// Parse stderr line by line
+			
+			// update
+			String key = "";
+			boolean check = false;
+			
 			while ((currentLine = stdError.readLine()) != null) {
 				String currentUID = "";
 
@@ -51,81 +71,110 @@ public class ParseCallgraph {
 				Matcher nodeMatcher = nodePattern.matcher(currentLine);
 				if (nodeMatcher.find()) {
 					currentNode = nodeMatcher.group(1);
-					Support support = setupNewNode(currentLine, nodeMatcher);
-					supports.add(support);
+					
+					// update
+					key = currentNode;
+					check = true;
+					functionMap.put(key, new TreeSet<String>());
 				}
 
 				// We're at a callsite within currentNode
 				Matcher callsiteMatcher = callsitePattern.matcher(currentLine);
 				// First node in callgraph is a null function
 				// TODO Do we need to evaluate it? TA's tutorial was unclear.
+				
+				// update
+				if (check == false && callsiteMatcher.find()) {
+					String callee = callsiteMatcher.group(2);
+					functionMapIntra.put(callee, new ArrayList<String>());
+				}
+				
 				if (callsiteMatcher.find() && currentNode != null) {
-					evaluateSupport(currentLine, callsiteMatcher, currentNode,
-							supports);
+					
+					// update
+					String callee = callsiteMatcher.group(2);
+					functionMap.get(key).add(callee);
+					if (functionMapIntra.get(callee) == null) {
+						functionMapIntra.put(callee, new ArrayList<String>());
+					}
+					functionMapIntra.get(callee).add(key);
 				}
 
 				System.out.println(currentLine);
 			}
-
-			System.out.println("");
+			
+			// update
+			TreeMap<PairConfidence, ArrayList<String>> pairs = new TreeMap<PairConfidence, ArrayList<String>>();
+		    ArrayList<String> functions = new ArrayList<String>(); 
+		    Iterator<String> keyIter = functionMapIntra.keySet().iterator();
+		    while(keyIter.hasNext()) {
+		    	functions.add((String)keyIter.next());
+		    }
+		    System.out.println(functions.size());
+			for (int i = 0; i < functions.size(); i ++) {
+				String function1 = (String)functions.get(i);
+				ArrayList<String> callerList = (ArrayList<String>)functionMapIntra.get(functions.get(i));
+				int support = functionMapIntra.get(functions.get(i)).size();
+				if (support == 0) {
+					continue;
+				}
+				for (int j = 0; j < functions.size(); j ++) {
+					if (i == j) {
+						continue;
+					}
+					String function2 = (String)functions.get(j);
+					ArrayList<String> tmp = (ArrayList<String>)callerList.clone();
+					ArrayList<String> remain = (ArrayList<String>)callerList.clone();
+					boolean c = tmp.retainAll(functionMapIntra.get(functions.get(j)));
+					remain.removeAll(tmp);
+					int supportPair = tmp.size();
+					if (supportPair < T_SUPPORT) {
+						continue;
+					}
+					double confidence = ((double)supportPair) / ((double)support);
+					
+					if (confidence < T_CONFIDENCE) {
+						continue;
+					}
+					
+					TreeSet<String> pair = new TreeSet<String>();
+					pair.add(function1);
+					pair.add(function2);
+					PairConfidence pc = new PairConfidence(function1, pair, supportPair, confidence);
+					pairs.put(pc, remain);
+				}
+			}
+			
 			System.out.println("RESULTS:");
 			System.out.println("--------");
-			for (Support s : supports) {
-				System.out.println(s);
+			NumberFormat numf = NumberFormat.getNumberInstance();
+			numf.setMaximumFractionDigits(2);
+			numf.setRoundingMode (RoundingMode.HALF_EVEN);
+			for (Map.Entry entry : pairs.entrySet()) {
+				String function = ((PairConfidence)entry.getKey()).getFunction();
+				TreeSet<String> ts = ((PairConfidence)entry.getKey()).getSet();
+				int support = ((PairConfidence)entry.getKey()).getSupport();
+				double conf = ((PairConfidence)entry.getKey()).getConf();
+				String p = "(";
+				Iterator tsIter = ts.iterator();
+				while (tsIter.hasNext()) {
+					p += tsIter.next();
+					if (tsIter.hasNext()) {
+						p += ", ";
+					} else {
+						p += "), ";
+					}
+				}
+				String header = "bug: " + function + " in ";
+				String tail = ", pair: " + p + "support: " + support + ", confidence: " + String.format("%.2f", conf*100.0) + "%";
+				for (String s: pairs.get(entry.getKey())) {
+					System.out.println(header + s + tail);
+				}
 			}
-
 			System.exit(0);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(-1);
 		}
-	}
-
-	private static void evaluateSupport(String currentLine,
-			Matcher callsiteMatcher, String currentNode,
-			TreeSet<Support> supports) {
-		String calledFunction = callsiteMatcher.group(2);
-
-		TreeSet functions = new TreeSet<String>();
-		functions.add(currentNode);
-		functions.add(calledFunction);
-		Support supportPair = new Support(functions, 1);
-		
-		System.out.println("Evaluating support of: " + supportPair);
-
-		boolean matched = false;
-		for (Support s : supports) {
-			if (s.equals(supportPair)) {
-				s.incrementCount();
-				matched = true;
-				break;
-			}
-		}
-
-		if (!matched) {
-			supports.add(supportPair);
-		}
-	}
-
-	/**
-	 * Initialize a TreeSet of size 1 to be the denominator in confidence
-	 * measures for that function.
-	 * 
-	 * @param currentLine
-	 * @param nodeMatcher
-	 * @return Support object for a single function
-	 */
-	private static Support setupNewNode(String currentLine, Matcher nodeMatcher) {
-		String function = nodeMatcher.group(1);
-		String nuid = nodeMatcher.group(2); // node uid?
-
-		// Using total count from LLVM, but may from inter-procedural.
-		int count = Integer.parseInt(nodeMatcher.group(3));
-
-		// Setup up a TreeSet of size 1 for the function by itself.
-		TreeSet functions = new TreeSet<String>();
-		functions.add(function);
-
-		return new Support(functions, count);
 	}
 }
