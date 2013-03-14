@@ -2,6 +2,7 @@ package core;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.NumberFormat;
 import java.math.RoundingMode;
@@ -40,33 +41,36 @@ public class ParseCallgraph {
 		
 		String currentLine = null;
 		String currentNode = null;
-		TreeSet<Support> supports = new TreeSet<Support>();
 		
 		// update
 		HashMap<String, TreeSet<String>> functionMap = new HashMap<String, TreeSet<String>>(); 
 		HashMap<String, ArrayList<String>> functionMapIntra = new HashMap<String, ArrayList<String>>(); 
 
 		try {
-			Process process = Runtime.getRuntime().exec(
-					"opt -print-callgraph ../proj-skeleton/test2/main.bc");
-
-			// Content of BitCode is printed to stdout. Not interesting.
-			BufferedReader stdInput = new BufferedReader(new InputStreamReader(
-					process.getInputStream()));
-
-			// Call graph is printed to stderr.
-			BufferedReader stdError = new BufferedReader(new InputStreamReader(
-					process.getErrorStream()));
-
-			// Parse stderr line by line
+			// multi-threads resolve process deadlock problem
+			final Process process = Runtime.getRuntime().exec(
+					"opt -print-callgraph ../proj-skeleton/test3/test3.bc");
+			new Thread() {
+				public void run() {
+					String currentLine = "";
+				    InputStream isStdout  = process.getInputStream();
+				    BufferedReader reader = new BufferedReader(new InputStreamReader(isStdout));
+				    try {
+						while (reader.readLine() != null);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}.start();
+			InputStream isError = process.getErrorStream();
+			BufferedReader reader2 = new BufferedReader(new InputStreamReader(isError));
 			
 			// update
 			String key = "";
 			boolean check = false;
 			
-			while ((currentLine = stdError.readLine()) != null) {
-				String currentUID = "";
-
+			while ((currentLine = reader2.readLine()) != null) {
+				
 				// We're at a new node
 				Matcher nodeMatcher = nodePattern.matcher(currentLine);
 				if (nodeMatcher.find()) {
@@ -125,7 +129,7 @@ public class ParseCallgraph {
 					String function2 = (String)functions.get(j);
 					ArrayList<String> tmp = (ArrayList<String>)callerList.clone();
 					ArrayList<String> remain = (ArrayList<String>)callerList.clone();
-					boolean c = tmp.retainAll(functionMapIntra.get(functions.get(j)));
+					tmp.retainAll(functionMapIntra.get(functions.get(j)));
 					remain.removeAll(tmp);
 					int supportPair = tmp.size();
 					if (supportPair < T_SUPPORT) {
