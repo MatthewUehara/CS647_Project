@@ -108,13 +108,12 @@ public class ParseCallgraph {
 			}
 			
 			// update
-			TreeMap<PairConfidence, ArrayList<String>> pairs = new TreeMap<PairConfidence, ArrayList<String>>();
+			TreeMap<PairConfidence, TreeSet<String>> pairs = new TreeMap<PairConfidence, TreeSet<String>>();
 		    ArrayList<String> functions = new ArrayList<String>(); 
 		    Iterator<String> keyIter = functionMapIntra.keySet().iterator();
 		    while(keyIter.hasNext()) {
 		    	functions.add((String)keyIter.next());
 		    }
-		    System.out.println(functions.size());
 			for (int i = 0; i < functions.size(); i ++) {
 				String function1 = (String)functions.get(i);
 				ArrayList<String> callerList = (ArrayList<String>)functionMapIntra.get(functions.get(i));
@@ -128,7 +127,8 @@ public class ParseCallgraph {
 					}
 					String function2 = (String)functions.get(j);
 					ArrayList<String> tmp = (ArrayList<String>)callerList.clone();
-					ArrayList<String> remain = (ArrayList<String>)callerList.clone();
+					TreeSet<String> remain = new TreeSet<String>();
+					remain.addAll(tmp);
 					tmp.retainAll(functionMapIntra.get(functions.get(j)));
 					remain.removeAll(tmp);
 					int supportPair = tmp.size();
@@ -141,9 +141,13 @@ public class ParseCallgraph {
 						continue;
 					}
 					
-					TreeSet<String> pair = new TreeSet<String>();
-					pair.add(function1);
-					pair.add(function2);
+					String pair = "";
+					if (function1.compareTo(function2) < 0) {
+						pair = "(" + function1+ ", " + function2 +"), ";
+					}
+					else {
+						pair = "(" + function2+ ", " + function1 +"), ";
+					}
 					PairConfidence pc = new PairConfidence(function1, pair, supportPair, confidence);
 					pairs.put(pc, remain);
 				}
@@ -154,26 +158,18 @@ public class ParseCallgraph {
 			NumberFormat numf = NumberFormat.getNumberInstance();
 			numf.setMaximumFractionDigits(2);
 			numf.setRoundingMode (RoundingMode.HALF_EVEN);
+			TreeSet<String> display = new TreeSet<String>();
 			for (Map.Entry entry : pairs.entrySet()) {
 				String function = ((PairConfidence)entry.getKey()).getFunction();
-				TreeSet<String> ts = ((PairConfidence)entry.getKey()).getSet();
 				int support = ((PairConfidence)entry.getKey()).getSupport();
 				double conf = ((PairConfidence)entry.getKey()).getConf();
-				String p = "(";
-				Iterator tsIter = ts.iterator();
-				while (tsIter.hasNext()) {
-					p += tsIter.next();
-					if (tsIter.hasNext()) {
-						p += ", ";
-					} else {
-						p += "), ";
-					}
-				}
 				String header = "bug: " + function + " in ";
-				String tail = ", pair: " + p + "support: " + support + ", confidence: " + String.format("%.2f", conf*100.0) + "%";
 				for (String s: pairs.get(entry.getKey())) {
-					System.out.println(header + s + tail);
+					display.add(header + s + ((PairConfidence)entry.getKey()).toString());
 				}
+			}
+			for (String s : display) {
+				System.out.println(s);
 			}
 			System.exit(0);
 		} catch (IOException e) {
