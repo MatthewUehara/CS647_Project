@@ -11,7 +11,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Map;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,7 +43,7 @@ public class ParseCallgraph {
 		
 		// update
 		HashMap<String, TreeSet<String>> functionMap = new HashMap<String, TreeSet<String>>(); 
-		HashMap<String, ArrayList<String>> functionMapIntra = new HashMap<String, ArrayList<String>>(); 
+		HashMap<String, TreeSet<String>> functionMapIntra = new HashMap<String, TreeSet<String>>(); 
 
 		try {
 			// multi-threads resolve process deadlock problem
@@ -52,7 +51,6 @@ public class ParseCallgraph {
 					"opt -print-callgraph ../proj-skeleton/test3/test3.bc");
 			new Thread() {
 				public void run() {
-					String currentLine = "";
 				    InputStream isStdout  = process.getInputStream();
 				    BufferedReader reader = new BufferedReader(new InputStreamReader(isStdout));
 				    try {
@@ -90,7 +88,7 @@ public class ParseCallgraph {
 				// update
 				if (check == false && callsiteMatcher.find()) {
 					String callee = callsiteMatcher.group(2);
-					functionMapIntra.put(callee, new ArrayList<String>());
+					functionMapIntra.put(callee, new TreeSet<String>());
 				}
 				
 				if (callsiteMatcher.find() && currentNode != null) {
@@ -99,7 +97,7 @@ public class ParseCallgraph {
 					String callee = callsiteMatcher.group(2);
 					functionMap.get(key).add(callee);
 					if (functionMapIntra.get(callee) == null) {
-						functionMapIntra.put(callee, new ArrayList<String>());
+						functionMapIntra.put(callee, new TreeSet<String>());
 					}
 					functionMapIntra.get(callee).add(key);
 				}
@@ -107,13 +105,24 @@ public class ParseCallgraph {
 				System.out.println(currentLine);
 			}
 			
+			TreeSet<String> t1 = new TreeSet<String>();
+			TreeSet<String> t2 = new TreeSet<String>();
+			t1.addAll(functionMapIntra.get("ap_escape_html"));
+			t2.addAll(functionMapIntra.get("apr_pstrcat"));
+			
+			System.out.println(t1);
+			System.out.println(t2);
+			System.out.println(t1.size());
+			t1.retainAll(t2);
+			System.out.println(t1.size());
+			
 			// update
 			TreeMap<PairConfidence, TreeSet<String>> pairs = new TreeMap<PairConfidence, TreeSet<String>>();
 		    ArrayList<String> functions = new ArrayList<String>(); 
 		    functions.addAll(functionMapIntra.keySet());
 			for (int i = 0; i < functions.size(); i ++) {
-				String function1 = (String)functions.get(i);
-				ArrayList<String> callerList = (ArrayList<String>)functionMapIntra.get(functions.get(i));
+				String function1 = functions.get(i);
+				TreeSet<String> callerList = functionMapIntra.get(functions.get(i));
 				int support = functionMapIntra.get(functions.get(i)).size();
 				if (support == 0) {
 					continue;
@@ -122,8 +131,9 @@ public class ParseCallgraph {
 					if (i == j) {
 						continue;
 					}
-					String function2 = (String)functions.get(j);
-					ArrayList<String> tmp = (ArrayList<String>)callerList.clone();
+					String function2 = functions.get(j);
+					TreeSet<String> tmp = new TreeSet<String>();
+					tmp.addAll(callerList);
 					TreeSet<String> remain = new TreeSet<String>();
 					remain.addAll(tmp);
 					tmp.retainAll(functionMapIntra.get(functions.get(j)));
@@ -158,8 +168,6 @@ public class ParseCallgraph {
 			TreeSet<String> display = new TreeSet<String>();
 			for (Map.Entry entry : pairs.entrySet()) {
 				String function = ((PairConfidence)entry.getKey()).getFunction();
-				int support = ((PairConfidence)entry.getKey()).getSupport();
-				double conf = ((PairConfidence)entry.getKey()).getConf();
 				String header = "bug: " + function + " in ";
 				for (String s: pairs.get(entry.getKey())) {
 					display.add(header + s + ((PairConfidence)entry.getKey()).toString());
