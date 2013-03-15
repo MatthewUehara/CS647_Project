@@ -154,16 +154,17 @@ public class ParseCallgraph {
 			NumberFormat numf = NumberFormat.getNumberInstance();
 			numf.setMaximumFractionDigits(2);
 			numf.setRoundingMode (RoundingMode.HALF_EVEN);
-			TreeSet<String> display = new TreeSet<String>();
+			TreeMap<String, String> display = new TreeMap<String, String>();
 			for (Map.Entry entry : pairs.entrySet()) {
 				String function = ((PairConfidence)entry.getKey()).getFunction();
 				String header = "bug: " + function + " in ";
 				for (String s: pairs.get(entry.getKey())) {
-					display.add(header + s + ((PairConfidence)entry.getKey()).toString());
+					String message = header + s + ((PairConfidence)entry.getKey()).toString();
+					display.put(message.replaceAll("_", ""), message);
 				}
 			}
-			for (String s : display) {
-				System.out.println(s);
+			for (Map.Entry entry : display.entrySet()) {
+				System.out.println((String)entry.getValue());
 			}
 			System.exit(0);
 		} catch (IOException e) {
