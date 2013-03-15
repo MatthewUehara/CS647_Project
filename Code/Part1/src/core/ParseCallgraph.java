@@ -139,10 +139,10 @@ public class ParseCallgraph {
 					
 					String pair = "";
 					if (function1.compareTo(function2) < 0) {
-						pair = "(" + function1+ ", " + function2 +"), ";
+						pair = "(" + function1+ " " + function2 +") ";
 					}
 					else {
-						pair = "(" + function2+ ", " + function1 +"), ";
+						pair = "(" + function2+ " " + function1 +") ";
 					}
 					PairConfidence pc = new PairConfidence(function1, pair, supportPair, confidence);
 					pairs.put(pc, remain);
@@ -160,7 +160,7 @@ public class ParseCallgraph {
 				String header = "bug: " + function + " in ";
 				for (String s: pairs.get(entry.getKey())) {
 					String message = header + s + ((PairConfidence)entry.getKey()).toString();
-					display.put(message.replaceAll("_", ""), message);
+					display.put(message.replaceAll("_", "").replaceAll(" ", ""), message);
 				}
 			}
 			for (Map.Entry entry : display.entrySet()) {

@@ -40,6 +40,6 @@ public class PairConfidence implements Comparable<PairConfidence>{
 	}
 	
 	public String toString() {
-		return ", pair: " + s + "support: " + support + ", confidence: " + String.format("%.2f", confidence*100.0) + "%";
+		return " pair: " + s + "support: " + support + " confidence: " + String.format("%.2f", confidence*100.0) + "%";
 	}
 }
