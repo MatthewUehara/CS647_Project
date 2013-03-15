@@ -42,7 +42,10 @@ public class ParseCallgraph {
 		String currentNode = null;
 		
 		// update
+		// used in inter-processing
 		HashMap<String, TreeSet<String>> functionMap = new HashMap<String, TreeSet<String>>(); 
+		
+		// used in intra-processing.
 		HashMap<String, TreeSet<String>> functionMapIntra = new HashMap<String, TreeSet<String>>(); 
 
 		try {
@@ -106,6 +109,14 @@ public class ParseCallgraph {
 			}
 			
 			// update
+			/* 
+			 * Please see PairConfidence.java for details. It contains function, function pair, support, and confidence.
+			 * PairCofidence is a key used in TreeMap, and the value is a TreeSet which has the functions with bugs
+			 * The complexity of my current algorithm is still n square. May need some optimization.
+			 * THe current run time of test3 is only 2 to 3 sec.  
+			 * The order of our output is not important. It will be sorted before comparing with gold file.
+			 * 
+			 */
 			TreeMap<PairConfidence, TreeSet<String>> pairs = new TreeMap<PairConfidence, TreeSet<String>>();
 		    ArrayList<String> functions = new ArrayList<String>(); 
 		    functions.addAll(functionMapIntra.keySet());
@@ -154,18 +165,27 @@ public class ParseCallgraph {
 			NumberFormat numf = NumberFormat.getNumberInstance();
 			numf.setMaximumFractionDigits(2);
 			numf.setRoundingMode (RoundingMode.HALF_EVEN);
+			
+			// only for local test. The actual output on ECE machine will be sorted automatically.
 			TreeMap<String, String> display = new TreeMap<String, String>();
+			
 			for (Map.Entry entry : pairs.entrySet()) {
 				String function = ((PairConfidence)entry.getKey()).getFunction();
 				String header = "bug: " + function + " in ";
 				for (String s: pairs.get(entry.getKey())) {
 					String message = header + s + ((PairConfidence)entry.getKey()).toString();
+					// System.out.println(message); // will be used on ECE machine.
+					
+					// only for local test. The actual output on ECE machine will be sorted automatically.
 					display.put(message.replaceAll("_", "").replaceAll(" ", ""), message);
 				}
 			}
+			
+			// only for local test. The actual output on ECE machine will be sorted automatically.
 			for (Map.Entry entry : display.entrySet()) {
 				System.out.println((String)entry.getValue());
 			}
+			
 			System.exit(0);
 		} catch (IOException e) {
 			e.printStackTrace();
