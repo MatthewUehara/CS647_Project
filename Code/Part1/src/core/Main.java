@@ -38,7 +38,7 @@ public class Main {
 			}
 			
 			// Run bug analysis
-			parseCallgraph.parse(filePart, thresholdSupport, thresholdConfidence);
+			parseCallgraph.intra(filePart, thresholdSupport, thresholdConfidence);
 			
 		} else {
 			System.out.println("Minimum argument is at least the BitCode filename");
