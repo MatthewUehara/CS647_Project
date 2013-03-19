@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.text.NumberFormat;
 import java.math.RoundingMode;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Map;
@@ -39,24 +40,23 @@ public class ParseCallgraph {
 	 *            Confidence of bug necessary in decimal format < 1 (eg.
 	 *            thresholdConfidence=0.85 means 85%)
 	 */
-	public void parse(String filePart, int thresholdSupport,
+	public void intra(String filePart, int thresholdSupport,
 			double thresholdConfidence) {
 		String currentLine = null;
-		String currentNode = null;
+		String caller = null;
 
 		// used in inter-processing
-		HashMap<String, TreeSet<String>> functionMap = new HashMap<String, TreeSet<String>>();
 		HashMap<String, TreeSet<String>> functionMapIntra = new HashMap<String, TreeSet<String>>();
 
 		try {
 			// multi-threads resolve process deadlock problem
 			final Process process = Runtime.getRuntime().exec(
-					"opt -print-callgraph ../" + filePart + "/" + filePart + ".bc");
+					"opt -interprocedural-basic-aa ../" + filePart + "/main.bc");
 			new Thread() {
 				public void run() {
-					InputStream isStdout = process.getInputStream();
+					InputStream stdout = process.getInputStream();
 					BufferedReader reader = new BufferedReader(
-							new InputStreamReader(isStdout));
+							new InputStreamReader(stdout));
 					try {
 						while (reader.readLine() != null)
 							;
@@ -65,53 +65,37 @@ public class ParseCallgraph {
 					}
 				}
 			}.start();
-			InputStream isError = process.getErrorStream();
-			BufferedReader reader2 = new BufferedReader(new InputStreamReader(
-					isError));
+			InputStream errorStream = process.getErrorStream();
+			BufferedReader errorBuffReader = new BufferedReader(
+					new InputStreamReader(errorStream));
 
-			// update
-			String key = "";
-			boolean check = false;
+			// While we're able to step through LLVM callgraph output
+			while ((currentLine = errorBuffReader.readLine()) != null) {
 
-			while ((currentLine = reader2.readLine()) != null) {
-
-				// We're at a new node
+				// Check if we're at a caller
 				Matcher nodeMatcher = nodePattern.matcher(currentLine);
 				if (nodeMatcher.find()) {
-					currentNode = nodeMatcher.group(1);
-
-					// update
-					key = currentNode;
-					check = true;
-					functionMap.put(key, new TreeSet<String>());
+					caller = nodeMatcher.group(1);
 				}
 
-				// We're at a callsite within currentNode
+				// Check if we're at a callee
 				Matcher callsiteMatcher = callsitePattern.matcher(currentLine);
-				// First node in callgraph is a null function
-				// TODO Do we need to evaluate it? TA's tutorial was unclear.
-
-				// update
-				if (check == false && callsiteMatcher.find()) {
+				if (callsiteMatcher.find() && caller == null) {
 					String callee = callsiteMatcher.group(2);
 					functionMapIntra.put(callee, new TreeSet<String>());
-				}
-
-				if (callsiteMatcher.find() && currentNode != null) {
+				} else if (callsiteMatcher.find() && caller != null) {
 
 					// update
 					String callee = callsiteMatcher.group(2);
-					functionMap.get(key).add(callee);
 					if (functionMapIntra.get(callee) == null) {
 						functionMapIntra.put(callee, new TreeSet<String>());
 					}
-					functionMapIntra.get(callee).add(key);
+					functionMapIntra.get(callee).add(caller);
 				}
 
 				System.out.println(currentLine);
 			}
 
-			// update
 			/*
 			 * Please see PairConfidence.java for details. It contains function,
 			 * function pair, support, and confidence. PairCofidence is a key
@@ -176,9 +160,9 @@ public class ParseCallgraph {
 			// sorted automatically.
 			TreeMap<String, String> display = new TreeMap<String, String>();
 
-			for (Map.Entry entry : pairs.entrySet()) {
-				String function = ((PairConfidence) entry.getKey())
-						.getFunction();
+			for (Entry<PairConfidence, TreeSet<String>> entry : pairs
+					.entrySet()) {
+				String function = entry.getKey().getFunction();
 				String header = "bug: " + function + " in ";
 				for (String s : pairs.get(entry.getKey())) {
 					String message = header + s
@@ -196,8 +180,8 @@ public class ParseCallgraph {
 
 			// only for local test. The actual output on ECE machine will be
 			// sorted automatically.
-			for (Map.Entry entry : display.entrySet()) {
-				System.out.println((String) entry.getValue());
+			for (Entry<String, String> entry : display.entrySet()) {
+				System.out.println(entry.getValue());
 			}
 
 			System.exit(0);
