@@ -51,7 +51,7 @@ public class ParseCallgraph {
 		try {
 			// multi-threads resolve process deadlock problem
 			final Process process = Runtime.getRuntime().exec(
-					"opt -interprocedural-basic-aa ../" + filePart + "/main.bc");
+					"opt -print-callgraph ../" + filePart + "/main.bc");
 			new Thread() {
 				public void run() {
 					InputStream stdout = process.getInputStream();
