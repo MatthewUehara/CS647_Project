@@ -7,7 +7,7 @@ package core;
  * @param args
  *            arg[0] is filename, arg[1] is support, arg[2] is confidence %
  */
-public class Main {
+public class InterMain {
 	// Default support and confidence parameters
 	public static final int T_SUPPORT_DEFAULT = 3;
 	public static final double T_CONFIDENCE_DEFAULT = 65;
@@ -38,7 +38,12 @@ public class Main {
 			}
 			
 			// Run bug analysis
-			parseCallgraph.intra(filePart, thresholdSupport, thresholdConfidence);
+			//parseCallgraph.parse(filePart, thresholdSupport, thresholdConfidence);
+			
+			
+			//update
+			ParseInter parseInter = new ParseInter();
+			parseInter.parse(filePart, thresholdSupport, thresholdConfidence);
 			
 		} else {
 			System.out.println("Minimum argument is at least the BitCode filename");
