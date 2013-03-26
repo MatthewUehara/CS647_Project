@@ -43,9 +43,10 @@ public class ParseCallgraph {
 	public void intra(String filePart, int thresholdSupport,
 			double thresholdConfidence) {
 		String currentLine = null;
-		String caller = null;
+		String currentNode = null;
 
 		// used in inter-processing
+		HashMap<String, TreeSet<String>> functionMap = new HashMap<String, TreeSet<String>>();
 		HashMap<String, TreeSet<String>> functionMapIntra = new HashMap<String, TreeSet<String>>();
 
 		try {
@@ -65,37 +66,53 @@ public class ParseCallgraph {
 					}
 				}
 			}.start();
-			InputStream errorStream = process.getErrorStream();
-			BufferedReader errorBuffReader = new BufferedReader(
-					new InputStreamReader(errorStream));
+			InputStream isError = process.getErrorStream();
+			BufferedReader reader2 = new BufferedReader(new InputStreamReader(
+					isError));
 
-			// While we're able to step through LLVM callgraph output
-			while ((currentLine = errorBuffReader.readLine()) != null) {
+			// update
+			String key = "";
+			boolean check = false;
 
-				// Check if we're at a caller
+			while ((currentLine = reader2.readLine()) != null) {
+
+				// We're at a new node
 				Matcher nodeMatcher = nodePattern.matcher(currentLine);
 				if (nodeMatcher.find()) {
-					caller = nodeMatcher.group(1);
+					currentNode = nodeMatcher.group(1);
+
+					// update
+					key = currentNode;
+					check = true;
+					functionMap.put(key, new TreeSet<String>());
 				}
 
-				// Check if we're at a callee
+				// We're at a callsite within currentNode
 				Matcher callsiteMatcher = callsitePattern.matcher(currentLine);
-				if (callsiteMatcher.find() && caller == null) {
+				// First node in callgraph is a null function
+				// TODO Do we need to evaluate it? TA's tutorial was unclear.
+
+				// update
+				if (check == false && callsiteMatcher.find()) {
 					String callee = callsiteMatcher.group(2);
 					functionMapIntra.put(callee, new TreeSet<String>());
-				} else if (callsiteMatcher.find() && caller != null) {
+				}
+
+				if (callsiteMatcher.find() && currentNode != null) {
 
 					// update
 					String callee = callsiteMatcher.group(2);
+					functionMap.get(key).add(callee);
 					if (functionMapIntra.get(callee) == null) {
 						functionMapIntra.put(callee, new TreeSet<String>());
 					}
-					functionMapIntra.get(callee).add(caller);
+					functionMapIntra.get(callee).add(key);
 				}
 
 				System.out.println(currentLine);
 			}
 
+			// update
 			/*
 			 * Please see PairConfidence.java for details. It contains function,
 			 * function pair, support, and confidence. PairCofidence is a key
@@ -160,9 +177,9 @@ public class ParseCallgraph {
 			// sorted automatically.
 			TreeMap<String, String> display = new TreeMap<String, String>();
 
-			for (Entry<PairConfidence, TreeSet<String>> entry : pairs
-					.entrySet()) {
-				String function = entry.getKey().getFunction();
+			for (Map.Entry entry : pairs.entrySet()) {
+				String function = ((PairConfidence) entry.getKey())
+						.getFunction();
 				String header = "bug: " + function + " in ";
 				for (String s : pairs.get(entry.getKey())) {
 					String message = header + s
@@ -180,8 +197,8 @@ public class ParseCallgraph {
 
 			// only for local test. The actual output on ECE machine will be
 			// sorted automatically.
-			for (Entry<String, String> entry : display.entrySet()) {
-				System.out.println(entry.getValue());
+			for (Map.Entry entry : display.entrySet()) {
+				System.out.println((String) entry.getValue());
 			}
 
 			System.exit(0);
