@@ -53,9 +53,15 @@ public class ParseCallgraph {
 					"opt -print-callgraph " + fileName);
 			new Thread() {
 				public void run() {
-					InputStream stdout = process.getInputStream();
+					InputStream isStdout = process.getInputStream();
 					BufferedReader reader = new BufferedReader(
-							new InputStreamReader(stdout));
+							new InputStreamReader(isStdout));
+					try {
+						while (reader.readLine() != null)
+							;
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			}.start();
 			InputStream isError = process.getErrorStream();
@@ -100,7 +106,7 @@ public class ParseCallgraph {
 					functionMapIntra.get(callee).add(key);
 				}
 
-				System.out.println(currentLine);
+				// System.out.println(currentLine);
 			}
 
 			// update
@@ -158,8 +164,8 @@ public class ParseCallgraph {
 				}
 			}
 
-			System.out.println("RESULTS:");
-			System.out.println("--------");
+			// System.out.println("RESULTS:");
+			// System.out.println("--------");
 			NumberFormat numf = NumberFormat.getNumberInstance();
 			numf.setMaximumFractionDigits(2);
 			numf.setRoundingMode(RoundingMode.HALF_EVEN);
