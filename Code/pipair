@@ -1,0 +1,2 @@
+#!/bin/bash
+java -classpath ../../Code/Part1/bin/ core.Main "$1" $2 $3

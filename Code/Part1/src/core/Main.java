@@ -14,7 +14,7 @@ public class Main {
 	
 	public static void main(String[] args) {
 		ParseCallgraph parseCallgraph = new ParseCallgraph();
-		String filePart = "";
+		String fileName = "";
 		int thresholdSupport = T_SUPPORT_DEFAULT;
 		double thresholdConfidence = T_CONFIDENCE_DEFAULT / 100;
 		
@@ -23,9 +23,7 @@ public class Main {
 			while (i < args.length) {
 				switch (i) {
 					case 0 :
-						String fileName = args[0];
-						int extIndex = fileName.indexOf(".bc");
-						filePart = fileName.substring(0, extIndex);
+						fileName = args[0];
 						break;
 					case 1 :
 						thresholdSupport = Integer.parseInt(args[1]);
@@ -38,7 +36,7 @@ public class Main {
 			}
 			
 			// Run bug analysis
-			parseCallgraph.intra(filePart, thresholdSupport, thresholdConfidence);
+			parseCallgraph.intra(fileName, thresholdSupport, thresholdConfidence);
 			
 		} else {
 			System.out.println("Minimum argument is at least the BitCode filename");

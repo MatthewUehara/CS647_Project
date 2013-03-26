@@ -30,17 +30,15 @@ public class ParseCallgraph {
 	 * I don't think we need to overcomplicate things. Java can just perform
 	 * Runtime.getRuntime().exec()
 	 * 
-	 * @param filePart
-	 *            Part of the filename that matches directory and file naming
-	 *            format (eg. filePart="test3" will be mapped to
-	 *            ../test3/test3.bc)
+	 * @param fileName
+	 *            Filename of bitcode file that will be anlyized.
 	 * @param thresholdSupport
 	 *            Minimum amount of support for the relationship.
 	 * @param thresholdConfidence
 	 *            Confidence of bug necessary in decimal format < 1 (eg.
 	 *            thresholdConfidence=0.85 means 85%)
 	 */
-	public void intra(String filePart, int thresholdSupport,
+	public void intra(String fileName, int thresholdSupport,
 			double thresholdConfidence) {
 		String currentLine = null;
 		String currentNode = null;
@@ -52,18 +50,12 @@ public class ParseCallgraph {
 		try {
 			// multi-threads resolve process deadlock problem
 			final Process process = Runtime.getRuntime().exec(
-					"opt -print-callgraph ../" + filePart + "/main.bc");
+					"opt -print-callgraph " + fileName);
 			new Thread() {
 				public void run() {
 					InputStream stdout = process.getInputStream();
 					BufferedReader reader = new BufferedReader(
 							new InputStreamReader(stdout));
-					try {
-						while (reader.readLine() != null)
-							;
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
 				}
 			}.start();
 			InputStream isError = process.getErrorStream();
@@ -90,7 +82,6 @@ public class ParseCallgraph {
 				// We're at a callsite within currentNode
 				Matcher callsiteMatcher = callsitePattern.matcher(currentLine);
 				// First node in callgraph is a null function
-				// TODO Do we need to evaluate it? TA's tutorial was unclear.
 
 				// update
 				if (check == false && callsiteMatcher.find()) {
