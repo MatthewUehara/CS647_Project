@@ -5,7 +5,8 @@ package core;
  * 
  * @param args
  *            arg[0] is filename, arg[1] is support, arg[2] is confidence %,
- *            arg[3] is parse type ("intra", "inter", "output_txt")
+ *            arg[3] is parse type ("intra", "inter", "output_txt_intra",
+ *            "output_txt_inter")
  */
 public class Main {
 	// Default support and confidence parameters
@@ -13,7 +14,8 @@ public class Main {
 	public static final double T_CONFIDENCE_DEFAULT = 65;
 	public static final String INTRA_PARSE_TYPE = "intra";
 	public static final String INTER_PARSE_TYPE = "inter";
-	public static final String OUTPUT_TXT_PARSE_TYPE = "output_txt";
+	public static final String OUTPUT_TXT_INTRA_PARSE_TYPE = "output_txt_intra";
+	public static final String OUTPUT_TXT_INTER_PARSE_TYPE = "output_txt_inter";
 
 	public static void main(String[] args) {
 		StaticAnalysis staticAnalysis;
@@ -44,15 +46,17 @@ public class Main {
 			// Set static analysis type based on parseType
 			if (parseType.equals(INTER_PARSE_TYPE)) {
 				staticAnalysis = new Interprocedural();
-			} else if (parseType.equals(OUTPUT_TXT_PARSE_TYPE)) {
-				staticAnalysis = new OutputTxt();
+			} else if (parseType.equals(OUTPUT_TXT_INTRA_PARSE_TYPE)) {
+				staticAnalysis = new OutputTxtIntra();
+			} else if (parseType.equals(OUTPUT_TXT_INTER_PARSE_TYPE)) {
+				staticAnalysis = new OutputTxtInter();
 			} else {
 				// Default is intraprocedural
 				staticAnalysis = new Intraprocedural();
 			}
 
-			// Run static analsysis parse
-			staticAnalysis.parse(fileName, thresholdSupport,
+			// Generate callgraph and parse
+			staticAnalysis.callgraph(fileName, thresholdSupport,
 					thresholdConfidence);
 
 		} else {
