@@ -52,7 +52,7 @@ public class Interprocedural implements StaticAnalysis {
 		return functions;
 	}
 	
-	public void parse(String filePart, int thresholdSupport,
+	public void parse(String fileName, int thresholdSupport,
 			double thresholdConfidence) {
 		String currentLine = null;
 		String currentNode = null;
@@ -64,7 +64,7 @@ public class Interprocedural implements StaticAnalysis {
 		try {
 			// multi-threads resolve process deadlock problem
 			final Process process = Runtime.getRuntime().exec(
-					"opt -print-callgraph ../" + "test2" + "/main.bc");
+					"opt -print-callgraph " + fileName);
 			new Thread() {
 				public void run() {
 					InputStream isStdout = process.getInputStream();
