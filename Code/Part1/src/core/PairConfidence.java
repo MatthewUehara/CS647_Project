@@ -43,7 +43,7 @@ public class PairConfidence implements Comparable<PairConfidence>{
 	}
 	
 	public int compareTo(PairConfidence pc) {
-		if (this.function.compareTo(pc.getFunction()) == 0) {
+		if (this.function.equals(pc.getFunction())) {
 			String p1 = pair;
 			String p2 = pc.getPair();
 			return p1.compareTo(p2);

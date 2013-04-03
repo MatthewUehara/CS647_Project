@@ -36,7 +36,7 @@ public class Interprocedural implements StaticAnalysis {
 				public void run() {
 					InputStream isStdout = process.getInputStream();
 					BufferedReader reader = new BufferedReader(
-							new InputStreamReader(isStdout));
+							new InputStreamReader(isStdout, Charset.forName("UTF-8")));
 					try {
 						while (reader.readLine() != null)
 							;
