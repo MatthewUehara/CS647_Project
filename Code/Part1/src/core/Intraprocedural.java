@@ -73,6 +73,8 @@ public class Intraprocedural implements StaticAnalysis {
 	}
 
 	public HashMap<String, TreeSet<String>> parse(BufferedReader br) {
+		
+		// functionMapIntra (function, caller set) is initialed
 		HashMap<String, TreeSet<String>> functionMapIntra = new HashMap<String, TreeSet<String>>();
 		String currentLine = null;
 		String currentNode = null;
@@ -111,6 +113,8 @@ public class Intraprocedural implements StaticAnalysis {
 					if (functionMapIntra.get(callee) == null) {
 						functionMapIntra.put(callee, new TreeSet<String>());
 					}
+					
+					// add (function, caller set) in the map
 					functionMapIntra.get(callee).add(key);
 				}
 
@@ -144,17 +148,30 @@ public class Intraprocedural implements StaticAnalysis {
 			if (support == 0) {
 				continue;
 			}
+			
+			/*
+			 * for each individual function rather than if self
+			 * compare the caller sets of both functions
+			 * the support of pair is the number of common elements in both sets
+			 * the support of function is the number of elements in the function's caller sets
+			 */
 			for (int j = 0; j < functions.size(); j++) {
 				if (i == j) {
 					continue;
 				}
+				
+				// compare two caller sets and get the number of common elements as the support
 				String function2 = functions.get(j);
 				TreeSet<String> tmp = new TreeSet<String>();
 				tmp.addAll(callerList);
 				TreeSet<String> remain = new TreeSet<String>();
+				
+				// the remain elements in the caller set are the bug locations
 				remain.addAll(tmp);
 				tmp.retainAll(functionMap.get(functions.get(j)));
 				remain.removeAll(tmp);
+				
+				// filter the result by the support level and confidence level
 				int supportPair = tmp.size();
 				if (supportPair < thresholdSupport) {
 					continue;
@@ -165,6 +182,8 @@ public class Intraprocedural implements StaticAnalysis {
 					continue;
 				}
 
+				// create the PairConfidence and bug location list
+				// create result maps
 				String pair = "";
 				if (function1.compareTo(function2) < 0) {
 					pair = "(" + function1 + " " + function2 + ") ";
