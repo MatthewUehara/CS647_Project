@@ -1,15 +1,27 @@
+/*
+ * The PairConfidence class is the key value stored in our final result map, 
+ * in which the value is the list of the bug locations.
+ * 
+ * There are 4 main parameters in this class:
+ * function: the function. e.g A
+ * pair: function pairs. e.g (A, B)
+ * support
+ * confidence
+ * 
+ */
+
 package core;
 
 public class PairConfidence implements Comparable<PairConfidence>{
 	
 	private String function;
-	private String s;
+	private String pair;
 	private int support;
 	private double confidence;
 	
-	public PairConfidence(String function, String s, int support, double confidence) {
+	public PairConfidence(String function, String pair, int support, double confidence) {
 		this.function = function;
-		this.s = s;
+		this.pair = pair;
 		this.support = support;
 		this.confidence = confidence;
 	}
@@ -19,7 +31,7 @@ public class PairConfidence implements Comparable<PairConfidence>{
 	}
 	
 	public String getPair() {
-		return s;
+		return pair;
 	}
 	
 	public int getSupport() {
@@ -31,8 +43,8 @@ public class PairConfidence implements Comparable<PairConfidence>{
 	}
 	
 	public int compareTo(PairConfidence pc) {
-		if (this.function.equals(pc.getFunction())) {
-			String p1 = s;
+		if (this.function.compareTo(pc.getFunction()) == 0) {
+			String p1 = pair;
 			String p2 = pc.getPair();
 			return p1.compareTo(p2);
 		}
@@ -40,6 +52,6 @@ public class PairConfidence implements Comparable<PairConfidence>{
 	}
 	
 	public String toString() {
-		return " pair: " + s + "support: " + support + " confidence: " + String.format("%.2f", confidence*100.0) + "%";
+		return " pair: " + pair + "support: " + support + " confidence: " + String.format("%.2f", confidence*100.0) + "%";
 	}
 }
