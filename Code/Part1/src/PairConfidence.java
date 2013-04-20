@@ -10,7 +10,7 @@
  * 
  */
 
-package core;
+
 
 public class PairConfidence implements Comparable<PairConfidence>{
 	

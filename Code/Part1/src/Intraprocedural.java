@@ -1,4 +1,4 @@
-package core;
+
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -213,21 +213,20 @@ public class Intraprocedural implements StaticAnalysis {
 			for (String s : pairs.get(entry.getKey())) {
 				String message = header + s
 						+ ((PairConfidence) entry.getKey()).toString();
-				// System.out.println(message); // will be used on ECE
-				// machine.
+				System.out.println(message); // will be used on ECE machine.
 
 				// only for local test. The actual output on ECE machine
 				// will be sorted automatically.
-				display.put(message.replaceAll("_", "").replaceAll(" ", ""),
-						message);
+//				display.put(message.replaceAll("_", "").replaceAll(" ", ""),
+//						message);
 			}
 		}
 
 		// only for local test. The actual output on ECE machine will be
 		// sorted automatically.
-		for (Map.Entry entry : display.entrySet()) {
-			System.out.println((String) entry.getValue());
-		}
+//		for (Map.Entry entry : display.entrySet()) {
+//			System.out.println((String) entry.getValue());
+//		}
 
 		System.exit(0);
 

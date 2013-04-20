@@ -1,4 +1,4 @@
-package core;
+
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.TreeSet;
 
-public class OutputTxtInter extends Interprocedural {
+public class OutputTxtIntra extends Intraprocedural {
 	@Override
 	public void callgraph(String fileName, int thresholdSupport,
 			double thresholdConfidence) {
